@@ -185,14 +185,14 @@ HDF5RequestHandler::HDF5RequestHandler(const string & name)
 
     BESDEBUG(HDF5_NAME, "In HDF5RequestHandler::HDF5RequestHandler" << endl);
 
-    add_handler(DAS_RESPONSE, HDF5RequestHandler::hdf5_build_das);
-    add_handler(DDS_RESPONSE, HDF5RequestHandler::hdf5_build_dds);
-    add_handler(DATA_RESPONSE, HDF5RequestHandler::hdf5_build_data);
-    add_handler(DMR_RESPONSE, HDF5RequestHandler::hdf5_build_dmr);
-    add_handler(DAP4DATA_RESPONSE, HDF5RequestHandler::hdf5_build_dmr);
+    add_method(DAS_RESPONSE, HDF5RequestHandler::hdf5_build_das);
+    add_method(DDS_RESPONSE, HDF5RequestHandler::hdf5_build_dds);
+    add_method(DATA_RESPONSE, HDF5RequestHandler::hdf5_build_data);
+    add_method(DMR_RESPONSE, HDF5RequestHandler::hdf5_build_dmr);
+    add_method(DAP4DATA_RESPONSE, HDF5RequestHandler::hdf5_build_dmr);
 
-    add_handler(HELP_RESPONSE, HDF5RequestHandler::hdf5_build_help);
-    add_handler(VERS_RESPONSE, HDF5RequestHandler::hdf5_build_version);
+    add_method(HELP_RESPONSE, HDF5RequestHandler::hdf5_build_help);
+    add_method(VERS_RESPONSE, HDF5RequestHandler::hdf5_build_version);
 
     // Obtain the metadata cache entries and purge level.
     HDF5RequestHandler::_mdcache_entries     = get_uint_key("H5.MetaDataMemCacheEntries", 0);
