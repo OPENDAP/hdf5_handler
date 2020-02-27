@@ -556,6 +556,8 @@ void HDF5RequestHandler::get_dds_with_attributes( BESDDSResponse*bdds,BESDataDDS
                 write_dds_to_disk_cache(dds_cache_fname,dds);
 
             // Add attributes
+            // This is the only change that needs to be made.
+#if 0
             {
                 hid_t h5_fd = -1;
                 if(_usecf == true)
@@ -564,6 +566,7 @@ void HDF5RequestHandler::get_dds_with_attributes( BESDDSResponse*bdds,BESDataDDS
                     h5_fd = fileid;
                 add_das_to_dds(dds,container_name,filename,das_cache_fname,h5_fd,das_from_dc);
             }
+#endif
         
             // Add memory cache if possible
             if (dds_cache) {
