@@ -75,6 +75,76 @@ void get_data(hid_t dset, void *buf)
         throw InternalErr(__FILE__, __LINE__, "failed to get memory type");
     }
 
+    if (H5Dread(dset, memtype, dspace, dspace, H5P_DEFAULT, buf)
+            < 0) {
+        H5Tclose(dtype);
+        H5Tclose(memtype);
+        H5Sclose(dspace);
+        throw InternalErr(__FILE__, __LINE__, "failed to read data");
+    }
+
+    if (H5Tclose(dtype) < 0){
+        H5Tclose(memtype);
+        H5Sclose(dspace);
+	throw InternalErr(__FILE__, __LINE__, "Unable to release the dtype.");
+    }
+
+    if (H5Tclose(memtype) < 0){
+        H5Sclose(dspace);
+        throw InternalErr(__FILE__, __LINE__, "Unable to release the memtype.");
+    }
+
+    if(H5Sclose(dspace)<0) {
+        throw InternalErr(__FILE__, __LINE__, "Unable to release the data space.");
+    }
+#if 0
+        // Supposed to release the resource at the release at the HDF5Array destructor.
+        //if (H5Dclose(dset) < 0){
+	 //  throw InternalErr(__FILE__, __LINE__, "Unable to close the dataset.");
+	//}
+    }
+#endif
+
+    BESDEBUG("h5", "<get_data()" << endl);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// \fn get_direct_data(hid_t dset, void *buf)
+/// will get all data of a \a dset dataset and put it into \a buf.
+/// Note: this routine is only used to access HDF5 integer,float and fixed-size string.
+//  variable length string is handled by function read_vlen_string.
+///
+/// \param[in] dset dataset id(dset)
+/// \param[out] buf pointer to a buffer
+///////////////////////////////////////////////////////////////////////////////
+void get_direct_data(hid_t dset, void *buf)
+{
+    BESDEBUG("h5", ">get_data()" << endl);
+
+    uint32_t filters;
+
+    hid_t dtype = -1;
+    if ((dtype = H5Dget_type(dset)) < 0) {
+        throw InternalErr(__FILE__, __LINE__, "Failed to get the datatype of the dataset");
+    }
+    hid_t dspace = -1;
+    if ((dspace = H5Dget_space(dset)) < 0) {
+        H5Tclose(dtype);
+        throw InternalErr(__FILE__, __LINE__, "Failed to get the data space of the dataset");
+    }
+    int rank = H5Sget_simple_extent_ndims(dspace);
+    vector<hsize_t> offset;
+    offset.resize(rank);
+    for(int i = 0; i <rank;i++)
+        offset[i] = 0;
+    //  Use HDF5 H5Tget_native_type API
+    hid_t memtype = H5Tget_native_type(dtype, H5T_DIR_ASCEND);
+    if (memtype < 0) {
+        H5Tclose(dtype);
+        H5Sclose(dspace);
+        throw InternalErr(__FILE__, __LINE__, "failed to get memory type");
+    }
+
     //if (H5Dread(dset, memtype, dspace, dspace, H5P_DEFAULT, buf)
     if (H5Dread_chunk(dset, H5P_DEFAULT, &offset[0],&filters, buf)
             < 0) {
@@ -108,6 +178,8 @@ void get_data(hid_t dset, void *buf)
 
     BESDEBUG("h5", "<get_data()" << endl);
 }
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// \fn get_strdata(int strindex, char *allbuf, char *buf, int elesize)

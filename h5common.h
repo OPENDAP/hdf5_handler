@@ -35,6 +35,7 @@
 #include <string>
 
 void get_data(hid_t dset, void *buf);
+void get_direct_data(hid_t dset, void *buf);
 
 int get_slabdata(hid_t dset, int *, int *, int *, int num_dim, void *);
 
