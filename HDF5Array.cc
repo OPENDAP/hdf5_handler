@@ -263,7 +263,16 @@ void HDF5Array:: m_array_of_atomic(hid_t dset_id, hid_t dtype_id,
     try {
         if (nelms == d_num_elm) {
 
-	    vector<char> convbuf(d_memneed);
+        hsize_t chunk_nbytes;
+	   // vector<char> convbuf(d_memneed);
+
+        vector<hsize_t>hoffset;
+        hoffset.resize(d_num_dim);
+        for (int i =0; i<d_num_dim;i++)
+            hoffset[i] = 0;
+        H5Dget_chunk_storage_size(dset_id,&hoffset[0],&chunk_nbytes);
+	    vector<char> convbuf(chunk_nbytes);
+        
 	    get_data(dset_id, (void *) &convbuf[0]);
 
 	    // Check if a Signed Byte to Int16 conversion is necessary, this is only valid for DAP2.

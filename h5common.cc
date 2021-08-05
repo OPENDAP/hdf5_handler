@@ -51,6 +51,8 @@ void get_data(hid_t dset, void *buf)
 {
     BESDEBUG("h5", ">get_data()" << endl);
 
+    uint32_t filters;
+
     hid_t dtype = -1;
     if ((dtype = H5Dget_type(dset)) < 0) {
         throw InternalErr(__FILE__, __LINE__, "Failed to get the datatype of the dataset");
@@ -60,6 +62,11 @@ void get_data(hid_t dset, void *buf)
         H5Tclose(dtype);
         throw InternalErr(__FILE__, __LINE__, "Failed to get the data space of the dataset");
     }
+    int rank = H5Sget_simple_extent_ndims(dspace);
+    vector<hsize_t> offset;
+    offset.resize(rank);
+    for(int i = 0; i <rank;i++)
+        offset[i] = 0;
     //  Use HDF5 H5Tget_native_type API
     hid_t memtype = H5Tget_native_type(dtype, H5T_DIR_ASCEND);
     if (memtype < 0) {
@@ -68,7 +75,8 @@ void get_data(hid_t dset, void *buf)
         throw InternalErr(__FILE__, __LINE__, "failed to get memory type");
     }
 
-    if (H5Dread(dset, memtype, dspace, dspace, H5P_DEFAULT, buf)
+    //if (H5Dread(dset, memtype, dspace, dspace, H5P_DEFAULT, buf)
+    if (H5Dread_chunk(dset, H5P_DEFAULT, &offset[0],&filters, buf)
             < 0) {
         H5Tclose(dtype);
         H5Tclose(memtype);
@@ -145,6 +153,7 @@ get_slabdata(hid_t dset, int *offset, int *step, int *count, int num_dim,
              void *buf)
 {
     BESDEBUG("h5", ">get_slabdata() " << endl);
+
 
     hid_t dtype = H5Dget_type(dset);
     if (dtype < 0) {
