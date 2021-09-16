@@ -656,6 +656,60 @@ void get_dataset(hid_t pid, const string &dname, DS_t * dt_inst_ptr,bool use_dim
          else if(false == is_pure_dim) // Except pure dimension,we need to save all dimension names in this dimension. 
             obtain_dimnames(dset,ndims,dt_inst_ptr);
     }
+
+    // Check the direct chunk status
+    dt_inst_ptr->direct_chunk_candidate = false;
+    {
+        // filter parameter values. For deflate, cd_values[0] is the level.
+        unsigned int        cd_values[20];  
+#if 0
+        vector<unsigned >cd_values;
+        cd_values.resize(20);
+#endif
+
+        hid_t plist_id = H5Dget_create_plist(dset); 
+        int numfilt = H5Pget_nfilters(plist_id); 
+        size_t nelmts = 1; 
+        unsigned int flags;  
+        char f_name[256];
+
+        if(numfilt == 1) { 
+
+            H5Z_filter_t filter_type = H5Pget_filter2(plist_id, 0, &flags, &nelmts, cd_values, sizeof(f_name), f_name,NULL); 
+
+               // Need to add datatype conversion check in the future. 
+            if(filter_type == H5Z_FILTER_DEFLATE && ndims != 0) { 
+
+                dt_inst_ptr->direct_chunk_candidate = true; 
+#if 0
+cerr<<"total number of element is "<<dt_inst_ptr->nelmts <<endl;
+cerr<<"nelmts is "<<nelmts <<endl;
+printf("f_name is %s\n",f_name);
+printf("cd_value[0]=%u\n",cd_values[0]);
+printf("cd_value[1]=%u\n",cd_values[1]);
+#endif
+                BESDEBUG("h5", "direct chunk deflate level is " <<cd_values[0]<<endl);
+                dt_inst_ptr->deflate_level = cd_values[0];
+                hsize_t chunk_nbytes;  
+                vector<hsize_t>hoffset;  
+                hoffset.resize(ndims);  
+                for (int i =0; i<ndims;i++)  
+                    hoffset[i] = 0;  
+             
+                if(H5Dget_chunk_storage_size(dset,&hoffset[0],&chunk_nbytes)<0) {
+                    string msg = "cannot obtain the chunk storage size for the dataset ";
+                    msg += dname;
+                    H5Pclose(plist_id); 
+                    H5Tclose(dtype);
+                    H5Sclose(dspace);
+                    H5Dclose(dset);
+                    throw InternalErr(__FILE__, __LINE__, msg);
+                }
+                dt_inst_ptr->storage_size = chunk_nbytes;
+            } 
+            H5Pclose(plist_id); 
+        } 
+    }
     
     if(H5Tclose(dtype)<0) {
         H5Sclose(dspace);

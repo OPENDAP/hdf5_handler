@@ -282,6 +282,7 @@ read_objects_base_type(DDS & dds_table, const string & varname,
 
         // Next, deal with Array data. This 'else clause' runs to
         // the end of the method. jhrg
+        // Add the direct chunk read check 
         HDF5Array *ar = new HDF5Array(varname, filename, bt);
         delete bt; bt = 0;
         ar->set_memneed(dt_inst.need);
@@ -289,6 +290,18 @@ read_objects_base_type(DDS & dds_table, const string & varname,
         ar->set_numelm((int) (dt_inst.nelmts));
 	    for (int dim_index = 0; dim_index < dt_inst.ndims; dim_index++)
             ar->append_dim(dt_inst.size[dim_index]); 
+
+        if(dt_inst.direct_chunk_candidate) {
+            vector<int> offset(dt_inst.ndims);
+            vector<int> count(dt_inst.ndims);
+            vector<int> step(dt_inst.ndims);
+            int nelms_trans = ar->format_constraint(&offset[0], &step[0], &count[0]); 
+            if(nelms_trans == dt_inst.nelmts) {
+                ar->set_direct_chunk();
+                ar->set_storagesize(dt_inst.storage_size);
+                ar->set_deflate_level(dt_inst.deflate_level);
+            }
+        }
         dds_table.add_var(ar);
         delete ar; ar = 0;
     }

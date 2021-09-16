@@ -60,6 +60,7 @@ HDF5Array::HDF5Array(const string & n, const string &d, BaseType * v) :
     d_num_dim = 0;
     d_num_elm = 0;
     d_memneed = 0;
+    direct_chunk = false;
 }
 
 HDF5Array::~HDF5Array() {
@@ -262,39 +263,9 @@ void HDF5Array:: m_array_of_atomic(hid_t dset_id, hid_t dtype_id,
 
     try {
 
-        bool direct_chunk = false;
-
-        if (nelms == d_num_elm) { 
-
-            // filter parameter values. For deflate, cd_values[0] is the level.
-            unsigned         cd_values[20];  
-            hid_t plist_id = H5Dget_create_plist(dset_id); 
-            int numfilt = H5Pget_nfilters(plist_id); 
-            size_t nelmts = 0; 
-            unsigned int flags, filter_info; 
-
-            if(numfilt == 1) { 
-
-               H5Z_filter_t filter_type = H5Pget_filter2(plist_id, 0, &flags, &nelmts, cd_values, 0, NULL, &filter_info); 
-
-               // Need to add datatype conversion check in the future. 
-               if(filter_type == H5Z_FILTER_DEFLATE)  
-                   direct_chunk = true; 
-            } 
-            H5Pclose(plist_id); 
-        } 
-
-        if(true == direct_chunk) { 
-            hsize_t chunk_nbytes; 
-            vector<hsize_t>hoffset; 
-            hoffset.resize(d_num_dim); 
-            
-            for (int i =0; i<d_num_dim;i++) 
-                hoffset[i] = 0; 
-
-            H5Dget_chunk_storage_size(dset_id,&hoffset[0],&chunk_nbytes); 
-
-            vector<char> convbuf(chunk_nbytes); 
+        if(direct_chunk) {
+            vector<char> convbuf(this->get_storagesize()); 
+            BESDEBUG("h5", "HDF5 Array Read: storage size is "<<this->get_storagesize() <<endl);
             get_direct_data(dset_id, (void *) &convbuf[0]); 
         } 
         else { 

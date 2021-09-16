@@ -89,6 +89,9 @@ typedef struct DS {
     hsize_t nelmts;
     /// Space needed 
     hsize_t need;
+    bool direct_chunk_candidate;
+    unsigned int storage_size;
+    unsigned int deflate_level;
 } DS_t;
 /// \brief A structure for DAS generation
 typedef struct DSattr {

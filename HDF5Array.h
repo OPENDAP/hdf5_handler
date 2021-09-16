@@ -52,10 +52,13 @@ class HDF5Array:public libdap::Array {
     
     hsize_t d_memneed;
     string var_path;
+    bool direct_chunk;
+    //unsigned int storage_size;
+    //unsigned int deflate_level;
     
     // Parse constraint expression and make HDF5 coordinate point location.
     // return number of elements to read. 
-    int format_constraint(int *cor, int *step, int *edg);
+    //int format_constraint(int *cor, int *step, int *edg);
 
     hid_t mkstr(int size, H5T_str_t pad);
 
@@ -90,6 +93,11 @@ class HDF5Array:public libdap::Array {
     HDF5Array(const std::string & n, const std::string &d, libdap::BaseType * v);
     virtual ~ HDF5Array();
 
+    // Parse constraint expression and make HDF5 coordinate point location.
+    // return number of elements to read. 
+    int format_constraint(int *cor, int *step, int *edg);
+
+
     /// Clone this instance.
     /// 
     /// Allocate a new instance and copy *this into it. This method must 
@@ -113,6 +121,11 @@ class HDF5Array:public libdap::Array {
     void set_numelm(int nelms);
 
     void set_varpath(const std::string vpath) { var_path = vpath;}
+
+    void set_direct_chunk() {direct_chunk = true;}
+    //void set_storage_size(unsigned int ss) {storage_size = ss;}
+    //void set_deflate_level(bool dl) {deflate_level = dl;}
+
     libdap::BaseType *h5dims_transform_to_dap4(libdap::D4Group *root,const std::vector<std::string> &dimpath);
 };
 

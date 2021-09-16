@@ -711,6 +711,25 @@ read_objects_base_type(D4Group * d4_grp,const string & varname,
                 ar->append_dim(dt_inst.size[dim_index]); 
         }
 
+        if(dt_inst.direct_chunk_candidate) {
+//cerr<<"coming to direct chunk. "<<endl;
+            vector<int> offset(dt_inst.ndims);
+            vector<int> count(dt_inst.ndims);
+            vector<int> step(dt_inst.ndims);
+            int nelms_trans = ar->format_constraint(&offset[0], &step[0], &count[0]); 
+            if(nelms_trans == dt_inst.nelmts) {
+                ar->set_direct_chunk();
+                ar->set_storagesize(dt_inst.storage_size);
+                ar->set_deflate_level(dt_inst.deflate_level);
+#if 0
+cerr<<"storage size is "<<dt_inst.storage_size <<endl;
+cerr<<"deflate level is "<<dt_inst.deflate_level <<endl;
+#endif
+                BESDEBUG("h5", "direct chunk DAP4: deflate level is " <<dt_inst.deflate_level<<endl);   
+                BESDEBUG("h5", "direct chunk DAP4: storage size is " <<dt_inst.storage_size<<endl);   
+            }
+        }
+
         // We need to transform dimension info. to DAP4 group
         BaseType* new_var = NULL;
         try {
