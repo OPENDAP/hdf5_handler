@@ -126,7 +126,7 @@ class HDF5Array:public libdap::Array {
     //void set_storage_size(unsigned int ss) {storage_size = ss;}
     //void set_deflate_level(bool dl) {deflate_level = dl;}
 
-    libdap::BaseType *h5dims_transform_to_dap4(libdap::D4Group *root,const std::vector<std::string> &dimpath);
+    libdap::Array *h5dims_transform_to_dap4(libdap::D4Group *root,const std::vector<std::string> &dimpath);
 };
 
 #endif

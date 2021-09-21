@@ -266,7 +266,19 @@ void HDF5Array:: m_array_of_atomic(hid_t dset_id, hid_t dtype_id,
         if(direct_chunk) {
             vector<char> convbuf(this->get_storagesize()); 
             BESDEBUG("h5", "HDF5 Array Read: storage size is "<<this->get_storagesize() <<endl);
+            BESDEBUG("h5", "HDF5 Array Read: get_value_capacity "<<this->get_value_capacity() <<endl);
             get_direct_data(dset_id, (void *) &convbuf[0]); 
+            BESDEBUG("h5", "HDF5 Array Direct chunk Read: before to libdap4 "<<endl);
+            if(this->var()->type()==dods_int8_c) {
+                set_value((dods_int8*)&convbuf[0],this->get_storagesize());
+
+            }
+            else { 
+            set_read_p(true);
+            BESDEBUG("h5", "HDF5 Array Direct chunk Read: before to libdap4 val2buf"<<endl);
+            val2buf((void*)&convbuf[0]);
+            }
+            BESDEBUG("h5", "HDF5 Array Direct chunk Read: End "<<endl);
         } 
         else { 
             if (nelms == d_num_elm) {
@@ -1480,7 +1492,7 @@ hid_t HDF5Array::mkstr(int size, H5T_str_t pad)
 }
 
 // We don't inherit libdap Array Class's transform_to_dap4 method since CF option is still using it.
-BaseType* HDF5Array::h5dims_transform_to_dap4(D4Group *grp,const vector<string> &dimpath) {
+Array* HDF5Array::h5dims_transform_to_dap4(D4Group *grp,const vector<string> &dimpath) {
 
     BESDEBUG("h5", "<h5dims_transform_to_dap4" << endl);
 

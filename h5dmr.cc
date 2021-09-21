@@ -72,7 +72,7 @@ HDF5PathFinder obj_paths;
 static DS_t dt_inst; 
 
 /// A function that map HDF5 attributes to DAP4
-void map_h5_attrs_to_dap4(hid_t oid,D4Group* d4g,BaseType* d4b,Structure * d4s,int flag);
+void map_h5_attrs_to_dap4(hid_t oid,D4Group* d4g,BaseType* d4b,Structure * d4s,Array *d4a, int flag);
 
 #if 0
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -209,7 +209,7 @@ bool depth_first(hid_t pid, char *gname,  D4Group* par_grp, const char *fname)
                         D4Group* tem_d4_cgroup = new D4Group(grp_name);
                         // Map the HDF5 cgroup attributes to DAP4 group attributes.
                         // Note the last flag of map_h5_attrs_to_dap4 must be 0 for the group attribute mapping.
-                        map_h5_attrs_to_dap4(cgroup,tem_d4_cgroup,NULL,NULL,0);
+                        map_h5_attrs_to_dap4(cgroup,tem_d4_cgroup,NULL,NULL,NULL,0);
 
                         // Add this new DAP4 group 
                         par_grp->add_group_nocopy(tem_d4_cgroup);
@@ -455,7 +455,7 @@ bool breadth_first(hid_t pid, char *gname, D4Group* par_grp, const char *fname,b
     }
    
     // The attributes of this group. Doing this order to follow ncdump's way (variable,attribute then groups)
-    map_h5_attrs_to_dap4(pid,par_grp,NULL,NULL,0);
+    map_h5_attrs_to_dap4(pid,par_grp,NULL,NULL,NULL,0);
 
     // Then HDF5 child groups
     for (hsize_t i = 0; i < nelems; i++) {
@@ -660,9 +660,9 @@ read_objects_base_type(D4Group * d4_grp,const string & varname,
         BaseType* new_var = d4_grp->var(bt->name());
         if(new_var){
             // Map the HDF5 dataset attributes to DAP4
-            map_h5_attrs_to_dap4(dset_id,NULL,new_var,NULL,1);
+            map_h5_attrs_to_dap4(dset_id,NULL,new_var,NULL,NULL,1);
             // If this variable is a hardlink, stores the HARDLINK info. as an attribute.
-            map_h5_dset_hardlink_to_d4(dset_id,varname,new_var,NULL,1);
+            map_h5_dset_hardlink_to_d4(dset_id,varname,new_var,NULL,NULL,1);
         }
         delete bt; 
         bt = 0;
@@ -725,13 +725,17 @@ read_objects_base_type(D4Group * d4_grp,const string & varname,
 cerr<<"storage size is "<<dt_inst.storage_size <<endl;
 cerr<<"deflate level is "<<dt_inst.deflate_level <<endl;
 #endif
+                BESDEBUG("h5", "direct chunk DAP4: varname is " <<varname<<endl);   
+                BESDEBUG("h5", "direct chunk DAP4: get sotrage size  is " <<ar->get_storagesize()<<endl);   
+                BESDEBUG("h5", "direct chunk DAP4: get capacity  is " <<ar->get_value_capacity()<<endl);   
                 BESDEBUG("h5", "direct chunk DAP4: deflate level is " <<dt_inst.deflate_level<<endl);   
                 BESDEBUG("h5", "direct chunk DAP4: storage size is " <<dt_inst.storage_size<<endl);   
             }
         }
 
         // We need to transform dimension info. to DAP4 group
-        BaseType* new_var = NULL;
+        //BaseType* new_var = NULL;
+        Array* new_var = NULL;
         try {
             new_var = ar->h5dims_transform_to_dap4(d4_grp,dt_inst.dimnames_path);
         }
@@ -744,10 +748,10 @@ cerr<<"deflate level is "<<dt_inst.deflate_level <<endl;
         dt_inst.dimnames_path.clear();
 
         // Map HDF5 dataset attributes to DAP4
-        map_h5_attrs_to_dap4(dset_id,NULL,new_var,NULL,1);
+        map_h5_attrs_to_dap4(dset_id,NULL,NULL,NULL,new_var,3);
 
         // If this is a hardlink, map the Hardlink info. as an DAP4 attribute.
-        map_h5_dset_hardlink_to_d4(dset_id,varname,new_var,NULL,1);
+        map_h5_dset_hardlink_to_d4(dset_id,varname,NULL,NULL,new_var,3);
 #if 0
         // Test the attribute
         D4Attribute *test_attr = new D4Attribute("DAP4_test",attr_str_c);
@@ -835,14 +839,14 @@ read_objects_structure(D4Group *d4_grp, const string & varname,
             }
 
             // We need to transform dimension info. to DAP4 group
-            BaseType* new_var = ar->h5dims_transform_to_dap4(d4_grp,dt_inst.dimnames_path);
+            Array* new_var = ar->h5dims_transform_to_dap4(d4_grp,dt_inst.dimnames_path);
             dt_inst.dimnames_path.clear();
 
             // Map HDF5 dataset attributes to DAP4
-            map_h5_attrs_to_dap4(dset_id,NULL,new_var,NULL,1);
+            map_h5_attrs_to_dap4(dset_id,NULL,NULL,NULL,new_var,3);
 
             // If this is a hardlink, map the Hardlink info. as an DAP4 attribute.
-            map_h5_dset_hardlink_to_d4(dset_id,varname,new_var,NULL,1);
+            map_h5_dset_hardlink_to_d4(dset_id,varname,NULL,NULL,new_var,3);
 
             // Add this var to DAP4 group
             if(new_var) 
@@ -852,8 +856,8 @@ read_objects_structure(D4Group *d4_grp, const string & varname,
         else {// A scalar structure
 
             structure->set_is_dap4(true);
-            map_h5_attrs_to_dap4(dset_id,NULL,NULL,structure,2);
-            map_h5_dset_hardlink_to_d4(dset_id,varname,NULL,structure,2);
+            map_h5_attrs_to_dap4(dset_id,NULL,NULL,structure,NULL,2);
+            map_h5_dset_hardlink_to_d4(dset_id,varname,NULL,structure,NULL,2);
             if(structure) 
                 d4_grp->add_var_nocopy(structure);
         }
@@ -866,7 +870,7 @@ read_objects_structure(D4Group *d4_grp, const string & varname,
 
 
 ///////////////////////////////////////////////////////////////////////////////// 
-///// \fn map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * d4s,int flag)
+///// \fn map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * d4s,Array* d4a,,int flag)
 ///// Map HDF5 attributes to DAP4 
 ///// 
 /////    \param h5_objid  HDF5 object ID(either group or dataset)
@@ -875,12 +879,14 @@ read_objects_structure(D4Group *d4_grp, const string & varname,
 /////               The flag must be 1 if d4b is not NULL.
 /////    \param d4s DAP Structure if the object is dataset and the datatype of the object is compound. 
 /////               The flag must be 2 if d4s is not NULL.
-////     \param flag flag to determine what kind of objects to map. The value must be 0,1 or 2.
+/////    \param d4a DAP Array if the object is dataset. 
+/////               The flag must be 3 if d4a is not NULL.
+////     \param flag flag to determine what kind of objects to map. The value must be 0,1, 2 or 3.
 /////    \throw error a string of error message to the dods interface. 
 /////////////////////////////////////////////////////////////////////////////////
 //
 
-void map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * d4s,int flag) {
+void map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * d4s,Array *d4a, int flag) {
 
     // Get the object info
     H5O_info_t obj_info;
@@ -1031,6 +1037,8 @@ void map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * 
             d4b->attributes()->add_attribute_nocopy(d4_attr);
         else if ( 2 == flag) // HDF5 dataset with compound datatype
             d4s->attributes()->add_attribute_nocopy(d4_attr);
+        else if ( 3 == flag) // HDF5 dataset with object type is array
+            d4a->attributes()->add_attribute_nocopy(d4_attr);
         else {
             stringstream sflag;
             sflag << flag;
@@ -1045,7 +1053,7 @@ void map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * 
 }
 
 ///////////////////////////////////////////////////////////////////////////////// 
-///// \fn map_h5_dset_hardlink_to_dap4(hid_t h5_dsetid,const string& full_path,BaseType* d4b,Structure * d4s,int flag)
+///// \fn map_h5_dset_hardlink_to_dap4(hid_t h5_dsetid,const string& full_path,BaseType* d4b,Structure * d4s, Array *d4a,int flag)
 ///// Map HDF5 dataset hardlink info to a DAP4 attribute
 ///// 
 /////    \param h5_dsetid  HDF5 dataset ID
@@ -1054,12 +1062,14 @@ void map_h5_attrs_to_dap4(hid_t h5_objid,D4Group* d4g,BaseType* d4b,Structure * 
 /////               The flag must be 1 if d4b is not NULL.
 /////    \param d4s DAP Structure if the object is dataset and the datatype of the object is compound. 
 /////               The flag must be 2 if d4s is not NULL.
-////     \param flag flag to determine what kind of objects to map. The value must be 1 or 2.
+/////    \param d4a DAP Array if the object is dataset. 
+/////               The flag must be 3 if d4s is not NULL.
+////     \param flag flag to determine what kind of objects to map. The value must be 1 or 2 or 3.
 /////    \throw error a string of error message to the dods interface. 
 /////////////////////////////////////////////////////////////////////////////////
 
 
-void map_h5_dset_hardlink_to_d4(hid_t h5_dsetid,const string & full_path, BaseType* d4b,Structure * d4s,int flag) {
+void map_h5_dset_hardlink_to_d4(hid_t h5_dsetid,const string & full_path, BaseType* d4b,Structure * d4s,Array *d4a, int flag) {
 
     // Obtain the unique object number info. If no hardlinks, empty string will return.
     string oid = get_hardlink_dmr(h5_dsetid, full_path);
@@ -1074,6 +1084,8 @@ void map_h5_dset_hardlink_to_d4(hid_t h5_dsetid,const string & full_path, BaseTy
             d4b->attributes()->add_attribute_nocopy(d4_hlinfo);
         else if ( 2 == flag)
             d4s->attributes()->add_attribute_nocopy(d4_hlinfo);
+        else if ( 3 == flag)
+            d4a->attributes()->add_attribute_nocopy(d4_hlinfo);
         else 
             delete d4_hlinfo;
     }
