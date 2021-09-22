@@ -269,6 +269,50 @@ void HDF5Array:: m_array_of_atomic(hid_t dset_id, hid_t dtype_id,
             BESDEBUG("h5", "HDF5 Array Read: get_value_capacity "<<this->get_value_capacity() <<endl);
             get_direct_data(dset_id, (void *) &convbuf[0]); 
             BESDEBUG("h5", "HDF5 Array Direct chunk Read: before to libdap4 "<<endl);
+            set_read_p(true);
+            val2buf_dc((void*)&convbuf[0]);
+            //set_value((dods_int8*)&convbuf[0],this->get_storagesize());
+#if 0
+            Type dvt = this->var()->type();
+
+            switch (dvt) {
+
+                case dods_byte_c:
+                case dods_uint8_c:
+                    break;
+                case dods_int8_c:
+                    set_value((dods_int8*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_int16_c:
+                    set_value((dods_int16*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_uint16_c:
+                    set_value((dods_uint16*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_int32_c:
+                    set_value((dods_int32*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_uint32_c:
+                    set_value((dods_uint32*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_int64_c:
+                    set_value((dods_int64*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_uint64_c:
+                    set_value((dods_uint64*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_float32_c:
+                    set_value((dods_float32*)&convbuf[0],this->get_storagesize());
+                    break;
+                case dods_float64_c:
+                    set_value((dods_float64*)&convbuf[0],this->get_storagesize());
+                    break;
+                default:
+                    throw InternalErr(__FILE__,__LINE__, "The datatype doesn't support direct chunk IO.");
+
+            }
+#endif
+#if 0
             if(this->var()->type()==dods_int8_c) {
                 set_value((dods_int8*)&convbuf[0],this->get_storagesize());
 
@@ -278,6 +322,7 @@ void HDF5Array:: m_array_of_atomic(hid_t dset_id, hid_t dtype_id,
             BESDEBUG("h5", "HDF5 Array Direct chunk Read: before to libdap4 val2buf"<<endl);
             val2buf((void*)&convbuf[0]);
             }
+#endif
             BESDEBUG("h5", "HDF5 Array Direct chunk Read: End "<<endl);
         } 
         else { 

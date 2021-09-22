@@ -713,11 +713,23 @@ read_objects_base_type(D4Group * d4_grp,const string & varname,
 
         if(dt_inst.direct_chunk_candidate) {
 //cerr<<"coming to direct chunk. "<<endl;
+            //KY: only libdap4's set_value() functions can be used to
+            //    transfer direct chunk IO data. The set_value() 
+            //    only works for numerical types. so here we check.
+            //    
+            Type dvt = ar->var()->type();
+            bool direct_chunk_dtype = false;
+            if(dods_byte_c == dvt || dods_int8_c == dvt || dods_int16_c == dvt ||
+               dods_uint16_c == dvt || dods_int32_c == dvt || dods_uint32_c == dvt ||
+               dods_int64_c == dvt || dods_uint64_c == dvt || dods_float32_c == dvt ||
+               dods_float64_c == dvt || dods_char_c == dvt 
+               || dods_uint8_c == dvt)
+                direct_chunk_dtype = true;
             vector<int> offset(dt_inst.ndims);
             vector<int> count(dt_inst.ndims);
             vector<int> step(dt_inst.ndims);
             int nelms_trans = ar->format_constraint(&offset[0], &step[0], &count[0]); 
-            if(nelms_trans == dt_inst.nelmts) {
+            if(nelms_trans == dt_inst.nelmts && direct_chunk_dtype == true) {
                 ar->set_direct_chunk();
                 ar->set_storagesize(dt_inst.storage_size);
                 ar->set_deflate_level(dt_inst.deflate_level);
